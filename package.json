@@ -1,0 +1,10 @@
+{
+  "name": "gradesreport",
+  "version": "1.0.0",
+  "description": "School Grades Report Web App and Google Apps Script Backend",
+  "scripts": {
+    "deploy": "./deploy.sh"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
