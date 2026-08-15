@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบรายงานผลการเรียนออนไลน์ | โรงเรียนบ้านหนองสะพังโนนสะอาด</title>
+
+  <!-- Import Google Fonts (Sarabun & Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Tailwind CSS v3 via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Sarabun', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            school: {
+              50: '#f0f4fe',
+              100: '#e1e9fc',
+              200: '#c8daf9',
+              300: '#a3c2f4',
+              400: '#79a2ed',
+              500: '#5880e4',
+              600: '#3e60d5',
+              700: '#324cbd',
+              800: '#2d3f9b',
+              900: '#29377c',
+              950: '#1c224c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.4);
+      border-radius: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.6);
+    }
+
+    /* Animation helper classes */
+    .fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Glassmorphism Background Circles */
+    .bg-circle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      z-index: 0;
+      opacity: 0.45;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-950 text-slate-100 min-h-screen relative overflow-x-hidden flex flex-col justify-between font-sans">
+
+  <!-- Glassmorphism Background Shapes -->
+  <div class="bg-circle bg-school-700 w-72 h-72 top-[-10%] left-[-10%] md:w-96 md:h-96"></div>
+  <div class="bg-circle bg-indigo-900 w-80 h-80 bottom-[10%] right-[-10%] md:w-[500px] md:h-[500px]"></div>
+
+  <!-- Header / Navigation -->
+  <header class="w-full max-w-7xl mx-auto px-4 py-6 flex items-center justify-between relative z-10">
+    <div class="flex items-center gap-3">
+      <div
+        class="w-12 h-12 bg-gradient-to-tr from-school-600 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-school-500/20 border border-white/10">
+        <i class="fa-solid fa-graduation-cap text-2xl text-white"></i>
+      </div>
+      <div>
+        <h1
+          class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+          โรงเรียนบ้านหนองสะพังโนนสะอาด</h1>
+        <p class="text-xs text-school-300">BANNONGSAPUNGNONSA-ARD SCHOOL</p>
+      </div>
+    </div>
+    <div class="text-xs bg-white/5 border border-white/10 rounded-full px-3 py-1.5 backdrop-blur-sm text-slate-400">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+      ระบบทำงานปกติ
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="w-full max-w-4xl mx-auto px-4 py-8 flex-grow relative z-10 flex flex-col justify-center gap-8">
+
+    <!-- Hero / Title -->
+    <div class="text-center max-w-xl mx-auto space-y-3">
+      <span
+        class="px-3 py-1 text-xs font-semibold tracking-wider text-school-300 uppercase bg-school-950/60 border border-school-800/50 rounded-full inline-block">
+        ระบบสารสนเทศของโรงเรียน
+      </span>
+      <h2 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+        ระบบดูผลการเรียนออนไลน์
+      </h2>
+      <p class="text-slate-400 text-sm md:text-base leading-relaxed">
+        นักเรียนและผู้ปกครองสามารถตรวจสอบผลการเรียนรายบุคคลได้ง่าย ๆ<br class="hidden sm:inline">
+        เพียงกรอกข้อมูลปีการศึกษา ระดับชั้น และเลขประจำตัวประชาชน 13 หลัก
+      </p>
+    </div>
+
+    <!-- Form Section -->
+    <div class="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-xl">
+      <form id="gradeForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Dropdown 1: Year -->
+          <div class="space-y-2">
+            <label for="academicYear" class="block text-sm font-semibold text-slate-300">
+              <i class="fa-solid fa-calendar-days text-school-400 mr-1.5"></i> ปีการศึกษา
+            </label>
+            <div class="relative">
+              <select id="academicYear" name="academicYear" required
+                class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-school-500 focus:border-transparent transition appearance-none cursor-pointer">
+                <option value="" disabled selected>เลือกปีการศึกษา</option>
+                <option value="2568">2568</option>
+                <option value="2567">2567</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
+                <i class="fa-solid fa-chevron-down text-sm"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dropdown 2: Grade Level -->
+          <div class="space-y-2">
+            <label for="gradeLevel" class="block text-sm font-semibold text-slate-300">
+              <i class="fa-solid fa-school text-school-400 mr-1.5"></i> ระดับชั้น
+            </label>
+            <div class="relative">
+              <select id="gradeLevel" name="gradeLevel" required
+                class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-school-500 focus:border-transparent transition appearance-none cursor-pointer">
+                <option value="" disabled selected>เลือกระดับชั้น</option>
+                <optgroup label="ระดับอนุบาล" class="bg-slate-950">
+                   <option value="อ.2">อนุบาล 2 (อ.2)</option>
+                   <option value="อ.3">อนุบาล 3 (อ.3)</option>
+                 </optgroup>
+                 <optgroup label="ระดับประถมศึกษา" class="bg-slate-950">
+                  <option value="ป.1">ประถมศึกษาปีที่ 1 (ป.1)</option>
+                  <option value="ป.2">ประถมศึกษาปีที่ 2 (ป.2)</option>
+                  <option value="ป.3">ประถมศึกษาปีที่ 3 (ป.3)</option>
+                  <option value="ป.4">ประถมศึกษาปีที่ 4 (ป.4)</option>
+                  <option value="ป.5">ประถมศึกษาปีที่ 5 (ป.5)</option>
+                  <option value="ป.6">ประถมศึกษาปีที่ 6 (ป.6)</option>
+                </optgroup>
+
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
+                <i class="fa-solid fa-chevron-down text-sm"></i>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input Text: National ID -->
+        <div class="space-y-2">
+          <label for="nationalId" class="block text-sm font-semibold text-slate-300">
+            <i class="fa-solid fa-id-card text-school-400 mr-1.5"></i> เลขประจำตัวประชาชน (13 หลัก)
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+              <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <input type="text" id="nationalId" name="nationalId" required placeholder="x-xxxx-xxxxx-xx-x" maxlength="17"
+              autocomplete="off"
+              class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-school-500 focus:border-transparent transition tracking-wider">
+          </div>
+          <p id="validationHint"
+            class="text-xs text-slate-500 flex items-center gap-1.5 pl-1 transition-colors duration-200">
+            <i class="fa-solid fa-circle-info"></i> กรุณากรอกเลขบัตรประชาชนเฉพาะตัวเลข 13 หลัก
+          </p>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submitBtn"
+          class="w-full bg-gradient-to-r from-school-600 to-indigo-600 hover:from-school-500 hover:to-indigo-500 text-white font-semibold py-4 px-6 rounded-xl shadow-lg shadow-school-700/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-school-500 transform active:scale-[0.98] transition duration-200 flex items-center justify-center gap-2 cursor-pointer">
+          <span id="btnText">ดูผลการเรียน</span>
+          <i id="btnIcon" class="fa-solid fa-magnifying-glass"></i>
+          <svg id="btnSpinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg"
+            fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Response / Results Area (Hidden by default) -->
+    <div id="resultSection" class="hidden fade-in space-y-4">
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-2xl backdrop-blur-xl space-y-6">
+
+        <!-- Header of the result -->
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-white text-lg" id="resultFileName">เอกสารผลการเรียน</h3>
+              <p class="text-xs text-slate-400" id="resultFileType">ประเภทไฟล์: PDF Document</p>
+            </div>
+          </div>
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button id="downloadBtn"
+              class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/50 text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 cursor-pointer">
+              <i class="fa-solid fa-download"></i> ดาวน์โหลดเอกสาร
+            </button>
+          </div>
+        </div>
+
+        <!-- Viewer Container -->
+        <div
+          class="w-full relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center min-h-[300px] md:min-h-[500px]">
+          <!-- PDF Viewer Frame -->
+          <iframe id="pdfViewer" class="w-full h-[500px] md:h-[650px] border-none hidden" allow="autoplay"></iframe>
+
+          <!-- Image Viewer -->
+          <div id="imageViewerContainer" class="hidden w-full p-4 flex flex-col items-center justify-center gap-4">
+            <div
+              class="relative overflow-hidden rounded-lg group max-h-[600px] flex items-center justify-center bg-slate-900 border border-slate-800 w-full">
+              <img id="imageViewer" src="" alt="ผลการเรียน"
+                class="max-w-full max-h-[550px] object-contain transition-transform duration-300 select-none">
+            </div>
+            <div class="flex gap-2">
+              <button id="zoomOutBtn"
+                class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-lg flex items-center justify-center transition border border-slate-700/50">
+                <i class="fa-solid fa-magnifying-glass-minus"></i>
+              </button>
+              <button id="zoomResetBtn"
+                class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 h-10 rounded-lg flex items-center justify-center transition border border-slate-700/50 text-xs font-semibold">
+                รีเซ็ตซูม
+              </button>
+              <button id="zoomInBtn"
+                class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-lg flex items-center justify-center transition border border-slate-700/50">
+                <i class="fa-solid fa-magnifying-glass-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Alert (Hidden by default) -->
+    <div id="errorAlert"
+      class="hidden fade-in bg-red-500/10 border border-red-500/20 rounded-2xl p-5 flex items-start gap-4">
+      <div class="w-10 h-10 rounded-lg bg-red-500/15 flex items-center justify-center text-red-500 shrink-0">
+        <i class="fa-solid fa-circle-exclamation text-xl"></i>
+      </div>
+      <div class="space-y-1">
+        <h4 class="font-bold text-red-500 text-base">ไม่สามารถค้นหาข้อมูลได้</h4>
+        <p id="errorText" class="text-sm text-slate-300 leading-relaxed">รายละเอียดข้อผิดพลาดของระบบ</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full border-t border-slate-900 py-6 mt-12 bg-slate-950/50 relative z-10">
+    <div
+      class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <p>© 2026 โรงเรียนบ้านหนองสะพังโนนสะอาด. สงวนลิขสิทธิ์.</p>
+      <div class="flex gap-4">
+        <span class="hover:text-slate-400 transition cursor-help"><i class="fa-solid fa-shield-halved"></i>
+          นโยบายความเป็นส่วนตัว</span>
+        <span class="hover:text-slate-400 transition cursor-help"><i class="fa-solid fa-phone"></i>
+          ติดต่อผู้ดูแลระบบ</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // --- เปลี่ยนค่านี้เป็น URL ของ Google Apps Script Web App ที่ Deploy แล้ว ---
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzK7RcH3I80WOMrQNNlIapD_V88KzS5XCzaB8k6TLu1sOhYXW6U61BIcHeUuL5g4r5QQQ/exec";
+
+    // DOM Elements
+    const form = document.getElementById('gradeForm');
+    const inputNationalId = document.getElementById('nationalId');
+    const validationHint = document.getElementById('validationHint');
+
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    const resultSection = document.getElementById('resultSection');
+    const resultFileName = document.getElementById('resultFileName');
+    const resultFileType = document.getElementById('resultFileType');
+    const pdfViewer = document.getElementById('pdfViewer');
+    const imageViewerContainer = document.getElementById('imageViewerContainer');
+    const imageViewer = document.getElementById('imageViewer');
+    const downloadBtn = document.getElementById('downloadBtn');
+
+    const errorAlert = document.getElementById('errorAlert');
+    const errorText = document.getElementById('errorText');
+
+    // เก็บไฟล์ข้อมูลไว้สำหรับฟังก์ชันดาวน์โหลด
+    let currentFileData = null;
+
+    // 1. ระบบจัดการฟอร์แมตเลขประจำตัวประชาชนไทย (x-xxxx-xxxxx-xx-x)
+    inputNationalId.addEventListener('input', (e) => {
+      // เอาอักขระอื่นออกทั้งหมดเหลือแต่ตัวเลข
+      let value = e.target.value.replace(/\D/g, '');
+
+      // จัดรูปแบบตัวเลข 13 หลัก
+      let formattedValue = '';
+      if (value.length > 0) {
+        formattedValue += value.substring(0, 1);
+      }
+      if (value.length > 1) {
+        formattedValue += '-' + value.substring(1, 5);
+      }
+      if (value.length > 5) {
+        formattedValue += '-' + value.substring(5, 10);
+      }
+      if (value.length > 10) {
+        formattedValue += '-' + value.substring(10, 12);
+      }
+      if (value.length > 12) {
+        formattedValue += '-' + value.substring(12, 13);
+      }
+
+      e.target.value = formattedValue;
+
+      // ตรวจสอบความถูกต้องและแจ้งเตือนผู้ใช้งานแบบเรียลไทม์
+      if (value.length === 0) {
+        validationHint.className = "text-xs text-slate-500 flex items-center gap-1.5 pl-1";
+        validationHint.innerHTML = `<i class="fa-solid fa-circle-info"></i> กรุณากรอกเลขบัตรประชาชนเฉพาะตัวเลข 13 หลัก`;
+      } else if (value.length < 13) {
+        validationHint.className = "text-xs text-yellow-500 flex items-center gap-1.5 pl-1 animate-pulse";
+        validationHint.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> กรุณากรอกตัวเลขให้ครบ 13 หลัก (ปัจจุบันมี ${value.length} หลัก)`;
+      } else {
+        validationHint.className = "text-xs text-emerald-500 flex items-center gap-1.5 pl-1";
+        validationHint.innerHTML = `<i class="fa-solid fa-circle-check"></i> ข้อมูลครบ 13 หลักแล้ว`;
+      }
+    });
+
+    // บล็อกคีย์ที่ไม่ใช่ตัวเลขเพื่อความแม่นยำสูงสุด
+    inputNationalId.addEventListener('keypress', (e) => {
+      if (e.key < '0' || e.key > '9') {
+        e.preventDefault();
+      }
+    });
+
+    // 2. จัดการการซูมรูปภาพผลการเรียน
+    let zoomLevel = 1;
+    const zoomIn = () => {
+      if (zoomLevel < 3) {
+        zoomLevel += 0.25;
+        imageViewer.style.transform = `scale(${zoomLevel})`;
+      }
+    };
+    const zoomOut = () => {
+      if (zoomLevel > 0.5) {
+        zoomLevel -= 0.25;
+        imageViewer.style.transform = `scale(${zoomLevel})`;
+      }
+    };
+    const zoomReset = () => {
+      zoomLevel = 1;
+      imageViewer.style.transform = `scale(${zoomLevel})`;
+    };
+
+    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+    document.getElementById('zoomResetBtn').addEventListener('click', zoomReset);
+
+    // ดับเบิลคลิกรูปเพื่อรีเซ็ตซูม
+    imageViewer.addEventListener('dblclick', zoomReset);
+
+    // 3. ฟังก์ชันดาวน์โหลดไฟล์จาก Base64
+    downloadBtn.addEventListener('click', () => {
+      if (!currentFileData) return;
+
+      try {
+        const link = document.createElement('a');
+        link.href = `data:${currentFileData.mimeType};base64,${currentFileData.base64}`;
+        link.download = currentFileData.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        alert("เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร: " + err.message);
+      }
+    });
+
+    // 4. ส่งแบบฟอร์มตรวจสอบข้อมูล (Submit Form)
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // ล้างข้อมูลหน้าจอและสถานะเก่าออก
+      resultSection.classList.add('hidden');
+      errorAlert.classList.add('hidden');
+      currentFileData = null;
+      zoomReset();
+
+      const year = document.getElementById('academicYear').value;
+      const grade = document.getElementById('gradeLevel').value;
+      // ล้างเครื่องหมายขีด (-) ออก ให้เหลือแต่ตัวเลข 13 หลักดิบๆ
+      const cleanNationalId = inputNationalId.value.replace(/\D/g, '');
+
+      // ป้องกันการยิงคำขอหากกรอกเลขประชาชนไม่ครบ 13 หลัก
+      if (cleanNationalId.length !== 13) {
+        showError("เลขประจำตัวประชาชนไม่ถูกต้อง กรุณากรอกให้ครบ 13 หลัก");
+        return;
+      }
+
+      // แสดง Loading State
+      setLoading(true);
+
+      try {
+        // ทดสอบระบบ: หากไม่ได้กรอก URL ของสคริปต์จริง จะแสดงข้อมูลจำลองเพื่อการสาธิต (Mocking)
+        if (GAS_API_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL" || GAS_API_URL.trim() === "") {
+          console.log("Using Mock Data since no GAS_API_URL is configured.");
+          await new Promise(resolve => setTimeout(resolve, 1500)); // หน่วงเวลาสร้างมู้ดการโหลดจริง
+
+          // ตรวจสอบค่าจำลองสำหรับการทดสอบ
+          // ตัวอย่าง: รหัส 1102003004005 ใน ป.1 จะเป็นไฟล์ PDF
+          if (cleanNationalId === "1102003004005") {
+            // จำลองไฟล์ PDF (หน้ากระดาษเปล่า)
+            const mockPdfBase64 = "JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PC9DcmVhdG9yIChTYXJpYikvQ3JlYXRpb25EYXRlIChEOjIwMjYwODE1MTczNTAwWikvUHJvZHVjZXIgKFNhcmliKS9UaXRsZSAoTW9jayBHcmFkZSBSZXBvcnQpPj4KZW5kb2JqCjIgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDMgMCBSPj4KZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9QYWdlcy9LaWRzWzQgMCBSXS9Db3VudCAxPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCAzIDAgUi9NZWRpYUJveFswIDAgNTk1IDg0Ml0vQ29udGVudHMgNSAwIFIvUmVzb3VyY2VzPDwvRm9udDw8L0YxIDYgMCBSPj4+Pj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDcwPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihTY2hvb2wgR3JhZGUgUmVwb3J0IC0gQmFuaG9uZ3NhcGhhbmcgU2Nob29sIC0gUERGIE1vY2spIFNqCkVUCmVuZHN0cmVhbQplbmRvYmoKNiAwIG9iago8PC9UeXBlL0ZvbnQvU3VidHlwZS9UeXBlMS9CYXNlRm9udC9IZWx2ZXRpY2EvRW5jb2RpbmcvV2luQW5zaUVuY29kaW5nPj4KZW5kb2JqCnhyZWYKMCA3CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNyAwMDAwMCBuIAowMDAwMDAwMTIzIDAwMDAwIG4gCjAwMDAwMDAxNzEgHex 00000 nIAowMDAwMDAwMjI4IDAwMDAwIG4gCjAwMDAwMDAzMzQgMDAwMDAgbiAKMDAwMDAwMDQ1NSAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgNy9Sb290IDIgMCBSPj4Kc3RhcnR4cmVmCjU1OAolJUVPRgo=";
+            displayResult({
+              success: true,
+              name: "1102003004005_GradeReport.pdf",
+              mimeType: "application/pdf",
+              base64: mockPdfBase64
+            });
+          } else if (cleanNationalId === "1102003004006") {
+            // จำลองไฟล์รูปภาพ PNG (ไอคอนการศึกษาขนาดเล็ก)
+            const mockImgBase64 = "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";
+            displayResult({
+              success: true,
+              name: "1102003004006_GradeReport.png",
+              mimeType: "image/png",
+              base64: mockImgBase64
+            });
+          } else {
+            showError("ไม่พบข้อมูลผลการเรียน หรือเลขประจำตัวประชาชนไม่ถูกต้อง");
+          }
+          return;
+        }
+
+        // ยิง request จริงไปยัง GAS API
+        const url = `${GAS_API_URL}?year=${encodeURIComponent(year)}&grade=${encodeURIComponent(grade)}&id=${encodeURIComponent(cleanNationalId)}`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          displayResult(data);
+        } else {
+          showError(data.message || "เกิดข้อผิดพลาดในการดึงข้อมูลจากระบบ");
+        }
+
+      } catch (err) {
+        console.error(err);
+        showError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้งในภายหลัง");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // 5. แสดงผลลัพธ์ลงในหน้าเว็บ
+    function displayResult(data) {
+      currentFileData = data;
+
+      // อัปเดตข้อมูลไฟล์
+      resultFileName.textContent = data.name;
+
+      const isPdf = data.mimeType.toLowerCase() === 'application/pdf' || data.name.toLowerCase().endsWith('.pdf');
+
+      if (isPdf) {
+        resultFileType.innerHTML = `<i class="fa-solid fa-file-pdf text-red-400 mr-1"></i> ประเภทไฟล์: PDF Document`;
+
+        // แสดง PDF
+        pdfViewer.src = `data:application/pdf;base64,${data.base64}`;
+        pdfViewer.classList.remove('hidden');
+        imageViewerContainer.classList.add('hidden');
+      } else {
+        resultFileType.innerHTML = `<i class="fa-solid fa-file-image text-blue-400 mr-1"></i> ประเภทไฟล์: Image File`;
+
+        // แสดงรูปภาพ
+        imageViewer.src = `data:${data.mimeType};base64,${data.base64}`;
+        imageViewer.classList.remove('hidden');
+        pdfViewer.classList.add('hidden');
+        imageViewerContainer.classList.remove('hidden');
+      }
+
+      // แสดง Section ผลลัพธ์
+      resultSection.classList.remove('hidden');
+
+      // เลื่อนหน้าจอลงไปยังส่วนแสดงผลเพื่อให้ผู้ใช้อ่านสะดวก
+      setTimeout(() => {
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    // 6. แสดงข้อความแจ้งเตือนข้อผิดพลาด
+    function showError(message) {
+      errorText.textContent = message;
+      errorAlert.classList.remove('hidden');
+
+      // เลื่อนหน้าจอลงไปยังข้อผิดพลาด
+      setTimeout(() => {
+        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    // 7. จัดการสถานะการรอโหลด (Loading State)
+    function setLoading(isLoading) {
+      if (isLoading) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+        btnText.textContent = "กำลังค้นหาข้อมูล...";
+        btnIcon.classList.add('hidden');
+        btnSpinner.classList.remove('hidden');
+      } else {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+        btnText.textContent = "ดูผลการเรียน";
+        btnIcon.classList.remove('hidden');
+        btnSpinner.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+
+</html>
