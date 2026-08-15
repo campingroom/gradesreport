@@ -7,7 +7,7 @@
  */
 
 // โฟลเดอร์หลักสำหรับเก็บข้อมูลผลการเรียน (โปรดแทนที่ด้วย Folder ID จริงของคุณ)
-var ROOT_FOLDER_ID = "YOUR_GOOGLE_DRIVE_ROOT_FOLDER_ID";
+var ROOT_FOLDER_ID = "18pAusFNuCxoPzopLn9p3vTcSdueNaq_I";
 
 /**
  * ฟังก์ชันหลักที่ทำหน้าที่รับ HTTP GET Request
@@ -53,7 +53,7 @@ function doGet(e) {
     if (!yearFolders.hasNext()) {
       return makeResponse({
         success: false,
-        message: "ไม่พบโฟลเดอร์ปีการศึกษา: " + year
+        message: "ไม่พบโฟลเดอร์ปีการศึกษา " + year + " ภายในโฟลเดอร์หลัก (" + rootFolder.getName() + ")"
       });
     }
     var yearFolder = yearFolders.next();
@@ -63,7 +63,7 @@ function doGet(e) {
     if (!gradeFolders.hasNext()) {
       return makeResponse({
         success: false,
-        message: "ไม่พบโฟลเดอร์ระดับชั้น: " + grade
+        message: "ไม่พบโฟลเดอร์ระดับชั้น " + grade + " ภายในโฟลเดอร์ปีการศึกษา " + year
       });
     }
     var gradeFolder = gradeFolders.next();

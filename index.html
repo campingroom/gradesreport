@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบรายงานผลการเรียนออนไลน์ | โรงเรียนบ้านหนองสะพังโนนสะอาด</title>
+  <link rel="icon" type="image/png" href="favicon.png">
 
   <!-- Import Google Fonts (Sarabun & Inter) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -105,9 +106,8 @@
   <!-- Header / Navigation -->
   <header class="w-full max-w-7xl mx-auto px-4 py-6 flex items-center justify-between relative z-10">
     <div class="flex items-center gap-3">
-      <div
-        class="w-12 h-12 bg-gradient-to-tr from-school-600 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-school-500/20 border border-white/10">
-        <i class="fa-solid fa-graduation-cap text-2xl text-white"></i>
+      <div class="w-12 h-12 flex items-center justify-center">
+        <img src="logo.png" alt="Logo" class="w-12 h-12 object-contain filter drop-shadow-[0_2px_8px_rgba(255,255,255,0.15)]">
       </div>
       <div>
         <h1
@@ -154,8 +154,6 @@
               <select id="academicYear" name="academicYear" required
                 class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:ring-2 focus:ring-school-500 focus:border-transparent transition appearance-none cursor-pointer">
                 <option value="" disabled selected>เลือกปีการศึกษา</option>
-                <option value="2568">2568</option>
-                <option value="2567">2567</option>
               </select>
               <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
                 <i class="fa-solid fa-chevron-down text-sm"></i>
@@ -316,12 +314,24 @@
 
   <script>
     // --- เปลี่ยนค่านี้เป็น URL ของ Google Apps Script Web App ที่ Deploy แล้ว ---
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzK7RcH3I80WOMrQNNlIapD_V88KzS5XCzaB8k6TLu1sOhYXW6U61BIcHeUuL5g4r5QQQ/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz6E1EXOcdMC-NRbOGCDzq6lTgZepoR4RpwvaYh04jbKBqo0Dx5CyYiC7e7rP-8OlpLAQ/exec";
 
     // DOM Elements
     const form = document.getElementById('gradeForm');
     const inputNationalId = document.getElementById('nationalId');
     const validationHint = document.getElementById('validationHint');
+    const academicYearSelect = document.getElementById('academicYear');
+
+    // 0. สร้างปีการศึกษาสำหรับตัวเลือกย้อนหลัง 5 ปีจากปีปัจจุบันโดยอัตโนมัติ
+    const currentBE = new Date().getFullYear() + 543;
+    academicYearSelect.innerHTML = '<option value="" disabled selected>เลือกปีการศึกษา</option>';
+    for (let i = 0; i < 5; i++) {
+      const year = currentBE - i;
+      const opt = document.createElement('option');
+      opt.value = year.toString();
+      opt.textContent = year.toString();
+      academicYearSelect.appendChild(opt);
+    }
 
     const submitBtn = document.getElementById('submitBtn');
     const btnText = document.getElementById('btnText');
