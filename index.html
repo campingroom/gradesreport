@@ -203,7 +203,11 @@
             </div>
             <input type="text" id="nationalId" name="nationalId" required placeholder="x-xxxx-xxxxx-xx-x" maxlength="17"
               autocomplete="off"
-              class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-11 pr-4 py-3.5 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-school-500 focus:border-transparent transition tracking-wider">
+              class="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-11 pr-10 py-3.5 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-school-500 focus:border-transparent transition tracking-wider">
+            <!-- ปุ่มเคลียร์ข้อมูล -->
+            <button type="button" id="clearIdBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 hidden transition-colors duration-200 cursor-pointer">
+              <i class="fa-solid fa-circle-xmark text-lg"></i>
+            </button>
           </div>
           <p id="validationHint"
             class="text-xs text-slate-500 flex items-center gap-1.5 pl-1 transition-colors duration-200">
@@ -321,6 +325,7 @@
     const inputNationalId = document.getElementById('nationalId');
     const validationHint = document.getElementById('validationHint');
     const academicYearSelect = document.getElementById('academicYear');
+    const clearIdBtn = document.getElementById('clearIdBtn');
 
     // 0. สร้างปีการศึกษาสำหรับตัวเลือกย้อนหลัง 5 ปีจากปีปัจจุบันโดยอัตโนมัติ
     const currentBE = new Date().getFullYear() + 543;
@@ -351,6 +356,24 @@
 
     // เก็บไฟล์ข้อมูลไว้สำหรับฟังก์ชันดาวน์โหลด
     let currentFileData = null;
+    let currentBlobUrl = null;
+
+    // ฟังก์ชันแปลง Base64 เป็น Blob URL เพื่อรองรับการเปิดไฟล์และดาวน์โหลดบน iOS/Safari/มือถือ
+    function base64ToBlobUrl(base64, mimeType) {
+      try {
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        return URL.createObjectURL(blob);
+      } catch (e) {
+        console.error("Base64 to Blob conversion failed", e);
+        return `data:${mimeType};base64,${base64}`; // Fallback to Data URL
+      }
+    }
 
     // 1. ระบบจัดการฟอร์แมตเลขประจำตัวประชาชนไทย (x-xxxx-xxxxx-xx-x)
     inputNationalId.addEventListener('input', (e) => {
@@ -379,14 +402,18 @@
 
       // ตรวจสอบความถูกต้องและแจ้งเตือนผู้ใช้งานแบบเรียลไทม์
       if (value.length === 0) {
+        clearIdBtn.classList.add('hidden');
         validationHint.className = "text-xs text-slate-500 flex items-center gap-1.5 pl-1";
         validationHint.innerHTML = `<i class="fa-solid fa-circle-info"></i> กรุณากรอกเลขบัตรประชาชนเฉพาะตัวเลข 13 หลัก`;
-      } else if (value.length < 13) {
-        validationHint.className = "text-xs text-yellow-500 flex items-center gap-1.5 pl-1 animate-pulse";
-        validationHint.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> กรุณากรอกตัวเลขให้ครบ 13 หลัก (ปัจจุบันมี ${value.length} หลัก)`;
       } else {
-        validationHint.className = "text-xs text-emerald-500 flex items-center gap-1.5 pl-1";
-        validationHint.innerHTML = `<i class="fa-solid fa-circle-check"></i> ข้อมูลครบ 13 หลักแล้ว`;
+        clearIdBtn.classList.remove('hidden');
+        if (value.length < 13) {
+          validationHint.className = "text-xs text-yellow-500 flex items-center gap-1.5 pl-1 animate-pulse";
+          validationHint.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> กรุณากรอกตัวเลขให้ครบ 13 หลัก (ปัจจุบันมี ${value.length} หลัก)`;
+        } else {
+          validationHint.className = "text-xs text-emerald-500 flex items-center gap-1.5 pl-1";
+          validationHint.innerHTML = `<i class="fa-solid fa-circle-check"></i> ข้อมูลครบ 13 หลักแล้ว`;
+        }
       }
     });
 
@@ -395,6 +422,24 @@
       if (e.key < '0' || e.key > '9') {
         e.preventDefault();
       }
+    });
+
+    // คลิกปุ่มเคลียร์เพื่อล้างค่าข้อมูลช่องรหัสประชาชน
+    clearIdBtn.addEventListener('click', () => {
+      inputNationalId.value = '';
+      clearIdBtn.classList.add('hidden');
+      validationHint.className = "text-xs text-slate-500 flex items-center gap-1.5 pl-1";
+      validationHint.innerHTML = `<i class="fa-solid fa-circle-info"></i> กรุณากรอกเลขบัตรประชาชนเฉพาะตัวเลข 13 หลัก`;
+      
+      // ล้างผลการค้นหาเดิมออกด้วยเพื่อสุขอนามัยที่ดีของหน้าจอ (UX)
+      resultSection.classList.add('hidden');
+      errorAlert.classList.add('hidden');
+      currentFileData = null;
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = null;
+      }
+      zoomReset();
     });
 
     // 2. จัดการการซูมรูปภาพผลการเรียน
@@ -423,17 +468,33 @@
     // ดับเบิลคลิกรูปเพื่อรีเซ็ตซูม
     imageViewer.addEventListener('dblclick', zoomReset);
 
-    // 3. ฟังก์ชันดาวน์โหลดไฟล์จาก Base64
+    // 3. ฟังก์ชันดาวน์โหลดไฟล์จาก Base64 / Blob URL
     downloadBtn.addEventListener('click', () => {
       if (!currentFileData) return;
 
       try {
-        const link = document.createElement('a');
-        link.href = `data:${currentFileData.mimeType};base64,${currentFileData.base64}`;
-        link.download = currentFileData.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        let blobUrl = currentBlobUrl;
+        if (!blobUrl) {
+          blobUrl = base64ToBlobUrl(currentFileData.base64, currentFileData.mimeType);
+        }
+
+        // ตรวจสอบว่าเป็นอุปกรณ์ iOS (iPhone, iPad, iPod) หรือไม่
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isIOS) {
+          // บน iOS Safari การเปิดลิงก์ Blob ใน Tab ใหม่เป็นวิธีที่เข้ากันได้ดีที่สุด 
+          // เพื่อให้ผู้ใช้สามารถกดปุ่ม Share และเลือก "Save to Files" หรือส่งต่อได้สะดวก
+          window.open(blobUrl, '_blank');
+        } else {
+          // บนอุปกรณ์อื่น ๆ ใช้การคลิกลิงก์ดาวน์โหลดตามปกติ
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = currentFileData.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       } catch (err) {
         alert("เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร: " + err.message);
       }
@@ -523,6 +584,12 @@
     function displayResult(data) {
       currentFileData = data;
 
+      // ล้างหน่วยความจำ Blob URL เดิมที่เคยสร้างไว้
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl);
+        currentBlobUrl = null;
+      }
+
       // อัปเดตข้อมูลไฟล์
       resultFileName.textContent = data.name;
 
@@ -531,8 +598,9 @@
       if (isPdf) {
         resultFileType.innerHTML = `<i class="fa-solid fa-file-pdf text-red-400 mr-1"></i> ประเภทไฟล์: PDF Document`;
 
-        // แสดง PDF
-        pdfViewer.src = `data:application/pdf;base64,${data.base64}`;
+        // แปลงเป็น Blob URL เพื่อรองรับการเปิดอ่านบน iOS/Safari
+        currentBlobUrl = base64ToBlobUrl(data.base64, data.mimeType);
+        pdfViewer.src = currentBlobUrl;
         pdfViewer.classList.remove('hidden');
         imageViewerContainer.classList.add('hidden');
       } else {
