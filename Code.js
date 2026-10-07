@@ -44,7 +44,7 @@ function doGet(e) {
     } catch (err) {
       return makeResponse({
         success: false,
-        message: "ไม่สามารถเข้าถึงระบบจัดเก็บไฟล์ได้ (Folder ID ไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าถึง)"
+        message: "ไม่สามารถเข้าถึงระบบจัดเก็บไฟล์ได้ (Folder ID ไม่ถูกต้อง หรือไม่มีสิทธิ์เข้าถึง): " + err.toString()
       });
     }
 
