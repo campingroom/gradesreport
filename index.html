@@ -250,14 +250,23 @@
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-            <button id="downloadBtn"
-              class="flex-1 sm:flex-initial bg-school-600 hover:bg-school-500 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-school-600/20 cursor-pointer">
-              <i class="fa-solid fa-download"></i> ดาวน์โหลด
+            <!-- ปุ่มแชร์ / บันทึกลงเครื่อง (รองรับ iOS Share Sheet & Save to Files) -->
+            <button id="shareBtn"
+              class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
+              title="บันทึกลงแอพไฟล์ หรือแชร์ผ่าน LINE">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i> บันทึก/แชร์
             </button>
+            <!-- ปุ่มเปิดแท็บใหม่ -->
             <button id="openTabBtn"
-              class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/50 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 cursor-pointer"
-              title="เปิดในแท็บใหม่เพื่อพิมพ์หรือบันทึกลงแอพไฟล์">
+              class="flex-1 sm:flex-initial bg-school-600 hover:bg-school-500 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-school-600/20 cursor-pointer"
+              title="เปิดดูเอกสารตัวเต็มในแท็บใหม่">
               <i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดแท็บใหม่
+            </button>
+            <!-- ปุ่มดาวน์โหลด -->
+            <button id="downloadBtn"
+              class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/50 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 cursor-pointer"
+              title="ดาวน์โหลดไฟล์ลงเครื่อง">
+              <i class="fa-solid fa-download"></i> ดาวน์โหลด
             </button>
           </div>
         </div>
@@ -266,8 +275,8 @@
         <div class="bg-school-950/40 border border-school-800/40 rounded-xl p-3 text-xs text-slate-300 flex items-start gap-2.5">
           <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 text-sm shrink-0"></i>
           <div>
-            <span class="font-semibold text-white">คำแนะนำการใช้งานบนมือถือ:</span>
-            <span class="text-slate-300 block sm:inline">หากเปิดบน iPhone/iPad หรือแอป LINE แล้วกดดาวน์โหลดไม่ได้ ให้กดปุ่ม <b>"เปิดแท็บใหม่"</b> เพื่อบันทึกลงเครื่อง หรือแตะค้างที่รูปภาพเพื่อบันทึก</span>
+            <span class="font-semibold text-white">คำแนะนำการบันทึกบนมือถือ:</span>
+            <span class="text-slate-300 block sm:inline">สำหรับ iPhone/iPad หรือแอป LINE ให้กดปุ่ม <b>"บันทึก/แชร์"</b> เพื่อเลือก <i>"บันทึกไปยัง 'ไฟล์'"</i> หรือกด <b>"เปิดแท็บใหม่"</b> แล้วแตะค้างที่เอกสารเพื่อบันทึก</span>
           </div>
         </div>
 
@@ -418,8 +427,9 @@
     const zoomResetBtn = document.getElementById('zoomResetBtn');
 
     // Actions
-    const downloadBtn = document.getElementById('downloadBtn');
+    const shareBtn = document.getElementById('shareBtn');
     const openTabBtn = document.getElementById('openTabBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
 
     const errorAlert = document.getElementById('errorAlert');
     const errorText = document.getElementById('errorText');
@@ -658,20 +668,171 @@
       imageScrollWrapper.scrollTop = scrollTop - (y - startY);
     });
 
-    // 4. ฟังก์ชันดาวน์โหลดและเปิดดูในแท็บใหม่ (รองรับ iOS, Android, LINE Browser)
+    // 4. ฟังก์ชันแชร์ / บันทึกลงเครื่อง / เปิดแท็บใหม่ (รองรับ iOS Safari, Android, LINE Browser 100%)
+    
+    // (ก) ปุ่มแชร์ / บันทึกลงเครื่อง ด้วย Web Share API
+    shareBtn.addEventListener('click', async () => {
+      if (!currentFileData) return;
+      const fileName = currentFileData.name || "ผลการเรียน.pdf";
+      const mimeType = currentFileData.mimeType || "application/pdf";
+
+      try {
+        const byteCharacters = atob(currentFileData.base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        const file = new File([blob], fileName, { type: mimeType });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: fileName,
+            text: 'เอกสารผลการเรียน: ' + fileName
+          });
+          return;
+        }
+      } catch (err) {
+        console.log("Web Share cancelled or not supported:", err);
+        if (err.name === 'AbortError') return;
+      }
+
+      // หาก Web Share ใช้งานไม่ได้ ให้เปิดแท็บใหม่สำรองทันที
+      openTabBtn.click();
+    });
+
+    // (ข) ปุ่มเปิดแท็บใหม่ (สร้าง Standalone HTML Viewer ไม่ติดบล็อก Blob URL บน iOS/LINE)
     openTabBtn.addEventListener('click', () => {
       if (!currentFileData) return;
-      
-      const blobUrl = currentBlobUrl || base64ToBlobUrl(currentFileData.base64, currentFileData.mimeType);
-      
-      // บนมือถือ / iOS การเปิดแท็บใหม่จะแสดงผลตัวเต็มและให้ผู้ใช้กด Share บันทึกลงแอพไฟล์ได้ 100%
-      const newWin = window.open(blobUrl, '_blank');
-      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-        // กรณี Popup โดนเบราว์เซอร์บล็อก
-        window.location.href = blobUrl;
+      const fileName = currentFileData.name || "ผลการเรียน";
+      const isPdf = currentFileData.mimeType.toLowerCase() === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+      const newWin = window.open('', '_blank');
+      if (newWin) {
+        let imagesHtml = '';
+        if (isPdf) {
+          const canvases = pdfPagesContainer.querySelectorAll('canvas');
+          if (canvases.length > 0) {
+            canvases.forEach((c) => {
+              imagesHtml += `<img src="${c.toDataURL('image/png')}" alt="หน้าผลการเรียน" class="report-img" />`;
+            });
+          } else {
+            imagesHtml = `<p style="text-align:center;color:#94a3b8;">กำลังเตรียมเอกสาร...</p>`;
+          }
+        } else {
+          imagesHtml = `<img src="data:${currentFileData.mimeType};base64,${currentFileData.base64}" alt="ผลการเรียน" class="report-img" />`;
+        }
+
+        newWin.document.write(`
+          <!DOCTYPE html>
+          <html lang="th">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${fileName} - โรงเรียนบ้านหนองสะพังโนนสะอาด</title>
+            <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+            <style>
+              * { box-sizing: border-box; }
+              body {
+                margin: 0;
+                padding: 16px;
+                background: #090d16;
+                color: #f8fafc;
+                font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-height: 100vh;
+              }
+              .bar {
+                width: 100%;
+                max-width: 850px;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                background: #1e293b;
+                border-radius: 12px;
+                margin-bottom: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+              }
+              .title { font-weight: 700; font-size: 15px; color: #fff; }
+              .btn {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                font-family: inherit;
+              }
+              .tip-box {
+                width: 100%;
+                max-width: 850px;
+                background: rgba(30, 41, 59, 0.6);
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 10px 14px;
+                font-size: 12px;
+                color: #cbd5e1;
+                margin-bottom: 16px;
+                text-align: center;
+              }
+              .content {
+                width: 100%;
+                max-width: 850px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+              }
+              .report-img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+                background: #ffffff;
+                display: block;
+              }
+              @media print {
+                body { background: #fff; padding: 0; }
+                .bar, .tip-box { display: none !important; }
+                .report-img { box-shadow: none; border-radius: 0; width: 100%; margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="bar">
+              <span class="title">📄 ${fileName}</span>
+              <button class="btn" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+            </div>
+            <div class="tip-box">
+              💡 <b>คำแนะนำ:</b> สามารถ <b>แตะค้างที่ภาพด้านล่าง</b> เพื่อเลือก <b>"บันทึกรูปภาพ"</b> ลงเครื่อง หรือกดปุ่ม <b>"พิมพ์ / บันทึก PDF"</b> ด้านบน
+            </div>
+            <div class="content">
+              ${imagesHtml}
+            </div>
+          </body>
+          </html>
+        `);
+        newWin.document.close();
+      } else {
+        // กรณีเบราว์เซอร์บล็อก Popup ให้ลองเปิด URL ตรง หรือเรียก share
+        if (currentFileData.viewUrl) {
+          window.location.href = currentFileData.viewUrl;
+        } else {
+          shareBtn.click();
+        }
       }
     });
 
+    // (ค) ปุ่มดาวน์โหลดปกติ
     downloadBtn.addEventListener('click', () => {
       if (!currentFileData) return;
 
@@ -679,23 +840,19 @@
         const blobUrl = currentBlobUrl || base64ToBlobUrl(currentFileData.base64, currentFileData.mimeType);
         const fileName = currentFileData.name || "ผลการเรียน.pdf";
 
-        // ตรวจสอบว่ารันบน iOS หรือไม่
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = fileName;
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
         if (isIOS) {
-          // บน iOS Safari มักไม่เปิดดาวน์โหลดอัตโนมัติ ให้เปิดแท็บใหม่สำรอง
-          setTimeout(() => {
-            window.open(blobUrl, '_blank');
-          }, 400);
+          // บน iOS การแชร์ หรือเปิดแท็บใหม่ทำงานได้แน่นอน 100%
+          shareBtn.click();
+        } else {
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
       } catch (err) {
         alert("เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร: " + err.message);
