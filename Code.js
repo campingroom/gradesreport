@@ -146,6 +146,9 @@ function getGradeFolder(year, grade) {
 /**
  * ฟังก์ชันค้นหาไฟล์ผลการเรียนของนักเรียน
  * ใช้ DriveApp.searchFiles query index ก่อน และมี fallback วนลูปหากค้นหาไม่เจอ
+ * รองรับทั้งรูปแบบ:
+ * - เลขบัตรประชาชนนำหน้า: 1234567890123_GradeReport.pdf
+ * - เลขที่+ชื่อ-นามสกุล-เลขบัตร: 01 เด็กชายกิตติพงษ์ เสาวะภาพ-1234567890123.pdf
  */
 function findStudentFile(gradeFolder, nationalId) {
   var targetFile = null;
@@ -157,7 +160,9 @@ function findStudentFile(gradeFolder, nationalId) {
 
     while (files.hasNext()) {
       var file = files.next();
-      if (file.getName().indexOf(nationalId) === 0) {
+      var fileName = file.getName();
+      // ตรวจสอบว่าชื่อไฟล์มีเลขประจำตัวประชาชน 13 หลักนี้ปรากฏอยู่หรือไม่ (อยู่หน้า กลาง หรือหลังชื่อ)
+      if (fileName.indexOf(nationalId) !== -1) {
         targetFile = file;
         return targetFile;
       }
@@ -170,7 +175,7 @@ function findStudentFile(gradeFolder, nationalId) {
   var allFiles = gradeFolder.getFiles();
   while (allFiles.hasNext()) {
     var f = allFiles.next();
-    if (f.getName().indexOf(nationalId) === 0) {
+    if (f.getName().indexOf(nationalId) !== -1) {
       targetFile = f;
       break;
     }
