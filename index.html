@@ -20,6 +20,9 @@
   <!-- Tailwind CSS v3 via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Mozilla PDF.js via CDN for high-quality responsive PDF rendering on Mobile -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
   <script>
     tailwind.config = {
       theme: {
@@ -233,57 +236,101 @@
 
     <!-- Response / Results Area (Hidden by default) -->
     <div id="resultSection" class="hidden fade-in space-y-4">
-      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-2xl backdrop-blur-xl space-y-6">
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl backdrop-blur-xl space-y-4 sm:space-y-6">
 
         <!-- Header of the result -->
-        <div
-          class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
               <i class="fa-solid fa-circle-check text-xl"></i>
             </div>
             <div>
-              <h3 class="font-bold text-white text-lg" id="resultFileName">เอกสารผลการเรียน</h3>
+              <h3 class="font-bold text-white text-base sm:text-lg break-all" id="resultFileName">เอกสารผลการเรียน</h3>
               <p class="text-xs text-slate-400" id="resultFileType">ประเภทไฟล์: PDF Document</p>
             </div>
           </div>
-          <div class="flex gap-2 w-full sm:w-auto">
+          <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button id="downloadBtn"
-              class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/50 text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 cursor-pointer">
-              <i class="fa-solid fa-download"></i> ดาวน์โหลดเอกสาร
+              class="flex-1 sm:flex-initial bg-school-600 hover:bg-school-500 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 shadow-lg shadow-school-600/20 cursor-pointer">
+              <i class="fa-solid fa-download"></i> ดาวน์โหลด
+            </button>
+            <button id="openTabBtn"
+              class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-white border border-slate-700/50 text-xs sm:text-sm font-medium px-4 py-2.5 rounded-lg transition flex items-center justify-center gap-2 cursor-pointer"
+              title="เปิดในแท็บใหม่เพื่อพิมพ์หรือบันทึกลงแอพไฟล์">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> เปิดแท็บใหม่
             </button>
           </div>
         </div>
 
-        <!-- Viewer Container -->
-        <div
-          class="w-full relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center min-h-[300px] md:min-h-[500px]">
-          <!-- PDF Viewer Frame -->
-          <iframe id="pdfViewer" class="w-full h-[500px] md:h-[650px] border-none hidden" allow="autoplay"></iframe>
+        <!-- Mobile iOS / In-App Browser Helper Tip -->
+        <div class="bg-school-950/40 border border-school-800/40 rounded-xl p-3 text-xs text-slate-300 flex items-start gap-2.5">
+          <i class="fa-solid fa-lightbulb text-amber-400 mt-0.5 text-sm shrink-0"></i>
+          <div>
+            <span class="font-semibold text-white">คำแนะนำการใช้งานบนมือถือ:</span>
+            <span class="text-slate-300 block sm:inline">หากเปิดบน iPhone/iPad หรือแอป LINE แล้วกดดาวน์โหลดไม่ได้ ให้กดปุ่ม <b>"เปิดแท็บใหม่"</b> เพื่อบันทึกลงเครื่อง หรือแตะค้างที่รูปภาพเพื่อบันทึก</span>
+          </div>
+        </div>
 
-          <!-- Image Viewer -->
-          <div id="imageViewerContainer" class="hidden w-full p-4 flex flex-col items-center justify-center gap-4">
-            <div
-              class="relative overflow-hidden rounded-lg group max-h-[600px] flex items-center justify-center bg-slate-900 border border-slate-800 w-full">
-              <img id="imageViewer" src="" alt="ผลการเรียน"
-                class="max-w-full max-h-[550px] object-contain transition-transform duration-300 select-none">
+        <!-- Viewer Container -->
+        <div class="w-full relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center min-h-[300px]">
+          
+          <!-- PDF Container (Canvas-based via PDF.js for 100% responsive fit-to-width) -->
+          <div id="pdfContainer" class="hidden w-full flex flex-col items-center">
+            <!-- PDF Toolbar -->
+            <div class="w-full bg-slate-900/90 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between text-xs text-slate-300">
+              <span id="pdfPageInfo" class="font-medium"><i class="fa-solid fa-file-pdf text-red-400 mr-1.5"></i> เอกสาร PDF (พอดีความกว้างหน้าจอ)</span>
+              <div class="flex items-center gap-1.5">
+                <button id="pdfZoomOutBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-8 h-8 rounded-lg flex items-center justify-center transition border border-slate-700/50" title="ลดขนาด">
+                  <i class="fa-solid fa-minus text-xs"></i>
+                </button>
+                <button id="pdfZoomResetBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 h-8 rounded-lg flex items-center justify-center transition border border-slate-700/50 text-[11px]" title="พอดีหน้าจอ">
+                  พอดีจอ
+                </button>
+                <button id="pdfZoomInBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-8 h-8 rounded-lg flex items-center justify-center transition border border-slate-700/50" title="เพิ่มขนาด">
+                  <i class="fa-solid fa-plus text-xs"></i>
+                </button>
+              </div>
             </div>
-            <div class="flex gap-2">
-              <button id="zoomOutBtn"
-                class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-lg flex items-center justify-center transition border border-slate-700/50">
-                <i class="fa-solid fa-magnifying-glass-minus"></i>
-              </button>
-              <button id="zoomResetBtn"
-                class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 h-10 rounded-lg flex items-center justify-center transition border border-slate-700/50 text-xs font-semibold">
-                รีเซ็ตซูม
-              </button>
-              <button id="zoomInBtn"
-                class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-10 h-10 rounded-lg flex items-center justify-center transition border border-slate-700/50">
-                <i class="fa-solid fa-magnifying-glass-plus"></i>
-              </button>
+
+            <!-- PDF Loading Spinner -->
+            <div id="pdfLoadingSpinner" class="py-16 flex flex-col items-center gap-3 text-slate-400 text-xs">
+              <svg class="animate-spin h-8 w-8 text-school-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>กำลังแปลงและจัดรูปแบบหน้า PDF ให้พอดีกับหน้าจอ...</span>
+            </div>
+
+            <!-- PDF Scroll & Canvas Pages Wrapper -->
+            <div id="pdfPagesScrollWrapper" class="w-full max-h-[75vh] overflow-x-auto overflow-y-auto p-2 sm:p-4 flex flex-col items-center gap-4">
+              <div id="pdfPagesContainer" class="flex flex-col items-center gap-4 w-full"></div>
             </div>
           </div>
+
+          <!-- Image Viewer -->
+          <div id="imageViewerContainer" class="hidden w-full flex flex-col items-center justify-center">
+            <!-- Image Toolbar -->
+            <div class="w-full bg-slate-900/90 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between text-xs text-slate-300">
+              <span><i class="fa-solid fa-image text-blue-400 mr-1.5"></i> รูปภาพผลการเรียน (แตะค้างเพื่อบันทึก)</span>
+              <div class="flex items-center gap-1.5">
+                <button id="zoomOutBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-8 h-8 rounded-lg flex items-center justify-center transition border border-slate-700/50" title="ซูมออก">
+                  <i class="fa-solid fa-minus text-xs"></i>
+                </button>
+                <button id="zoomResetBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 h-8 rounded-lg flex items-center justify-center transition border border-slate-700/50 text-[11px]" title="ขนาดเริ่มต้น">
+                  รีเซ็ต
+                </button>
+                <button id="zoomInBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-8 h-8 rounded-lg flex items-center justify-center transition border border-slate-700/50" title="ซูมเข้า">
+                  <i class="fa-solid fa-plus text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Image Scroll Wrapper (Support pan / drag / touch-scroll in all directions) -->
+            <div id="imageScrollWrapper" class="w-full max-h-[75vh] overflow-auto p-2 sm:p-4 flex items-center justify-center bg-slate-950">
+              <img id="imageViewer" src="" alt="ผลการเรียน" class="max-w-full h-auto object-contain transition-transform duration-200 select-none cursor-grab rounded-lg shadow-md">
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -317,7 +364,12 @@
   </footer>
 
   <script>
-    // --- เปลี่ยนค่านี้เป็น URL ของ Google Apps Script Web App ที่ Deploy แล้ว ---
+    // ตั้งค่า Worker ของ PDF.js
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // --- URL ของ Google Apps Script Web App ที่ Deploy แล้ว ---
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz6E1EXOcdMC-NRbOGCDzq6lTgZepoR4RpwvaYh04jbKBqo0Dx5CyYiC7e7rP-8OlpLAQ/exec";
 
     // DOM Elements
@@ -346,19 +398,40 @@
     const resultSection = document.getElementById('resultSection');
     const resultFileName = document.getElementById('resultFileName');
     const resultFileType = document.getElementById('resultFileType');
-    const pdfViewer = document.getElementById('pdfViewer');
+    
+    // PDF elements
+    const pdfContainer = document.getElementById('pdfContainer');
+    const pdfPagesContainer = document.getElementById('pdfPagesContainer');
+    const pdfLoadingSpinner = document.getElementById('pdfLoadingSpinner');
+    const pdfPageInfo = document.getElementById('pdfPageInfo');
+    const pdfZoomInBtn = document.getElementById('pdfZoomInBtn');
+    const pdfZoomOutBtn = document.getElementById('pdfZoomOutBtn');
+    const pdfZoomResetBtn = document.getElementById('pdfZoomResetBtn');
+    const pdfPagesScrollWrapper = document.getElementById('pdfPagesScrollWrapper');
+
+    // Image elements
     const imageViewerContainer = document.getElementById('imageViewerContainer');
     const imageViewer = document.getElementById('imageViewer');
+    const imageScrollWrapper = document.getElementById('imageScrollWrapper');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+
+    // Actions
     const downloadBtn = document.getElementById('downloadBtn');
+    const openTabBtn = document.getElementById('openTabBtn');
 
     const errorAlert = document.getElementById('errorAlert');
     const errorText = document.getElementById('errorText');
 
-    // เก็บไฟล์ข้อมูลไว้สำหรับฟังก์ชันดาวน์โหลด
+    // State
     let currentFileData = null;
     let currentBlobUrl = null;
+    let currentPdfDoc = null;
+    let currentPdfZoom = 1.0;
+    let currentImageZoom = 1.0;
 
-    // ฟังก์ชันแปลง Base64 เป็น Blob URL เพื่อรองรับการเปิดไฟล์และดาวน์โหลดบน iOS/Safari/มือถือ
+    // ฟังก์ชันแปลง Base64 เป็น Blob URL
     function base64ToBlobUrl(base64, mimeType) {
       try {
         const byteCharacters = atob(base64);
@@ -371,36 +444,21 @@
         return URL.createObjectURL(blob);
       } catch (e) {
         console.error("Base64 to Blob conversion failed", e);
-        return `data:${mimeType};base64,${base64}`; // Fallback to Data URL
+        return `data:${mimeType};base64,${base64}`;
       }
     }
 
     // 1. ระบบจัดการฟอร์แมตเลขประจำตัวประชาชนไทย (x-xxxx-xxxxx-xx-x)
     inputNationalId.addEventListener('input', (e) => {
-      // เอาอักขระอื่นออกทั้งหมดเหลือแต่ตัวเลข
       let value = e.target.value.replace(/\D/g, '');
-
-      // จัดรูปแบบตัวเลข 13 หลัก
       let formattedValue = '';
-      if (value.length > 0) {
-        formattedValue += value.substring(0, 1);
-      }
-      if (value.length > 1) {
-        formattedValue += '-' + value.substring(1, 5);
-      }
-      if (value.length > 5) {
-        formattedValue += '-' + value.substring(5, 10);
-      }
-      if (value.length > 10) {
-        formattedValue += '-' + value.substring(10, 12);
-      }
-      if (value.length > 12) {
-        formattedValue += '-' + value.substring(12, 13);
-      }
-
+      if (value.length > 0) formattedValue += value.substring(0, 1);
+      if (value.length > 1) formattedValue += '-' + value.substring(1, 5);
+      if (value.length > 5) formattedValue += '-' + value.substring(5, 10);
+      if (value.length > 10) formattedValue += '-' + value.substring(10, 12);
+      if (value.length > 12) formattedValue += '-' + value.substring(12, 13);
       e.target.value = formattedValue;
 
-      // ตรวจสอบความถูกต้องและแจ้งเตือนผู้ใช้งานแบบเรียลไทม์
       if (value.length === 0) {
         clearIdBtn.classList.add('hidden');
         validationHint.className = "text-xs text-slate-500 flex items-center gap-1.5 pl-1";
@@ -417,149 +475,256 @@
       }
     });
 
-    // บล็อกคีย์ที่ไม่ใช่ตัวเลขเพื่อความแม่นยำสูงสุด
     inputNationalId.addEventListener('keypress', (e) => {
-      if (e.key < '0' || e.key > '9') {
-        e.preventDefault();
-      }
+      if (e.key < '0' || e.key > '9') e.preventDefault();
     });
 
-    // คลิกปุ่มเคลียร์เพื่อล้างค่าข้อมูลช่องรหัสประชาชน
     clearIdBtn.addEventListener('click', () => {
       inputNationalId.value = '';
       clearIdBtn.classList.add('hidden');
       validationHint.className = "text-xs text-slate-500 flex items-center gap-1.5 pl-1";
       validationHint.innerHTML = `<i class="fa-solid fa-circle-info"></i> กรุณากรอกเลขบัตรประชาชนเฉพาะตัวเลข 13 หลัก`;
       
-      // ล้างผลการค้นหาเดิมออกด้วยเพื่อสุขอนามัยที่ดีของหน้าจอ (UX)
       resultSection.classList.add('hidden');
       errorAlert.classList.add('hidden');
+      cleanupResources();
+    });
+
+    function cleanupResources() {
       currentFileData = null;
+      currentPdfDoc = null;
+      currentPdfZoom = 1.0;
+      currentImageZoom = 1.0;
+      pdfPagesContainer.innerHTML = '';
       if (currentBlobUrl) {
         URL.revokeObjectURL(currentBlobUrl);
         currentBlobUrl = null;
       }
-      zoomReset();
+      resetImageZoom();
+    }
+
+    // 2. จัดการเรนเดอร์ PDF ด้วย PDF.js ให้พอดีกับหน้าจอมือถือ (Responsive Fit)
+    async function renderPdfFromBase64(base64) {
+      pdfLoadingSpinner.classList.remove('hidden');
+      pdfPagesContainer.innerHTML = '';
+
+      try {
+        const raw = atob(base64);
+        const uint8Array = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) {
+          uint8Array[i] = raw.charCodeAt(i);
+        }
+
+        const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+        currentPdfDoc = await loadingTask.promise;
+        pdfPageInfo.innerHTML = `<i class="fa-solid fa-file-pdf text-red-400 mr-1.5"></i> เอกสาร PDF (${currentPdfDoc.numPages} หน้า)`;
+
+        await renderPdfPages();
+      } catch (err) {
+        console.error("PDF render failed, fallback to direct view:", err);
+        pdfPagesContainer.innerHTML = `
+          <div class="p-6 text-center text-slate-400 text-xs">
+            <p class="mb-3">ไม่สามารถแสดงตัวอย่าง PDF ในหน้านี้ได้</p>
+            <button onclick="openTabBtn.click()" class="bg-school-600 hover:bg-school-500 text-white px-4 py-2 rounded-lg font-medium">
+              คลิกเพื่อเปิดดูเอกสารแบบเต็มจอ
+            </button>
+          </div>
+        `;
+      } finally {
+        pdfLoadingSpinner.classList.add('hidden');
+      }
+    }
+
+    async function renderPdfPages() {
+      if (!currentPdfDoc) return;
+      pdfPagesContainer.innerHTML = '';
+
+      // หาความกว้างของหน้าจอเพื่อคำนวณสเกลให้พอดีหน้าจอมือถือ
+      const scrollWrapperWidth = pdfPagesScrollWrapper.clientWidth || window.innerWidth;
+      const targetWidth = Math.max(280, scrollWrapperWidth - 32);
+
+      for (let pageNum = 1; pageNum <= currentPdfDoc.numPages; pageNum++) {
+        const page = await currentPdfDoc.getPage(pageNum);
+        const originalViewport = page.getViewport({ scale: 1.0 });
+
+        // คำนวณ Scale ให้ความกว้างของ PDF พอดี 100% กับหน้าจอ
+        const fitScale = (targetWidth / originalViewport.width) * currentPdfZoom;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.5); // เพิ่มความคมชัดบนจอ Retina
+        const scaledViewport = page.getViewport({ scale: fitScale * dpr });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.floor(scaledViewport.width);
+        canvas.height = Math.floor(scaledViewport.height);
+        canvas.style.width = Math.floor(originalViewport.width * fitScale) + 'px';
+        canvas.style.height = Math.floor(originalViewport.height * fitScale) + 'px';
+        canvas.className = "rounded-lg shadow-xl border border-slate-800 bg-white max-w-none block mx-auto transition-transform duration-200";
+
+        const ctx = canvas.getContext('2d');
+        await page.render({
+          canvasContext: ctx,
+          viewport: scaledViewport
+        }).promise;
+
+        pdfPagesContainer.appendChild(canvas);
+      }
+    }
+
+    pdfZoomInBtn.addEventListener('click', () => {
+      if (currentPdfZoom < 2.5) {
+        currentPdfZoom += 0.25;
+        renderPdfPages();
+      }
     });
 
-    // 2. จัดการการซูมรูปภาพผลการเรียน
-    let zoomLevel = 1;
-    const zoomIn = () => {
-      if (zoomLevel < 3) {
-        zoomLevel += 0.25;
-        imageViewer.style.transform = `scale(${zoomLevel})`;
+    pdfZoomOutBtn.addEventListener('click', () => {
+      if (currentPdfZoom > 0.6) {
+        currentPdfZoom -= 0.25;
+        renderPdfPages();
       }
-    };
-    const zoomOut = () => {
-      if (zoomLevel > 0.5) {
-        zoomLevel -= 0.25;
-        imageViewer.style.transform = `scale(${zoomLevel})`;
+    });
+
+    pdfZoomResetBtn.addEventListener('click', () => {
+      currentPdfZoom = 1.0;
+      renderPdfPages();
+    });
+
+    // ปรับขนาดหน้า PDF อัตโนมัติเมื่อหมุนหน้าจอมือถือ (Portrait / Landscape)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (currentPdfDoc && !pdfContainer.classList.contains('hidden')) {
+          renderPdfPages();
+        }
+      }, 250);
+    });
+
+    // 3. จัดการการซูมและเลื่อนรูปภาพ (รองรับ Touch Scrolling & Dragging)
+    function applyImageZoom() {
+      imageViewer.style.transform = `scale(${currentImageZoom})`;
+    }
+
+    function resetImageZoom() {
+      currentImageZoom = 1.0;
+      applyImageZoom();
+      imageScrollWrapper.scrollLeft = 0;
+      imageScrollWrapper.scrollTop = 0;
+    }
+
+    zoomInBtn.addEventListener('click', () => {
+      if (currentImageZoom < 3) {
+        currentImageZoom += 0.25;
+        applyImageZoom();
       }
-    };
-    const zoomReset = () => {
-      zoomLevel = 1;
-      imageViewer.style.transform = `scale(${zoomLevel})`;
-    };
+    });
 
-    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
-    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
-    document.getElementById('zoomResetBtn').addEventListener('click', zoomReset);
+    zoomOutBtn.addEventListener('click', () => {
+      if (currentImageZoom > 0.5) {
+        currentImageZoom -= 0.25;
+        applyImageZoom();
+      }
+    });
 
-    // ดับเบิลคลิกรูปเพื่อรีเซ็ตซูม
-    imageViewer.addEventListener('dblclick', zoomReset);
+    zoomResetBtn.addEventListener('click', resetImageZoom);
+    imageViewer.addEventListener('dblclick', resetImageZoom);
 
-    // 3. ฟังก์ชันดาวน์โหลดไฟล์จาก Base64 / Blob URL
+    // รองรับการคลิกลาก (Mouse Dragging) รูปภาพเวลาซูม
+    let isDragging = false;
+    let startX, startY, scrollLeft, scrollTop;
+    imageScrollWrapper.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      imageViewer.classList.add('cursor-grabbing');
+      imageViewer.classList.remove('cursor-grab');
+      startX = e.pageX - imageScrollWrapper.offsetLeft;
+      startY = e.pageY - imageScrollWrapper.offsetTop;
+      scrollLeft = imageScrollWrapper.scrollLeft;
+      scrollTop = imageScrollWrapper.scrollTop;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        imageViewer.classList.remove('cursor-grabbing');
+        imageViewer.classList.add('cursor-grab');
+      }
+    });
+
+    imageScrollWrapper.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - imageScrollWrapper.offsetLeft;
+      const y = e.pageY - imageScrollWrapper.offsetTop;
+      imageScrollWrapper.scrollLeft = scrollLeft - (x - startX);
+      imageScrollWrapper.scrollTop = scrollTop - (y - startY);
+    });
+
+    // 4. ฟังก์ชันดาวน์โหลดและเปิดดูในแท็บใหม่ (รองรับ iOS, Android, LINE Browser)
+    openTabBtn.addEventListener('click', () => {
+      if (!currentFileData) return;
+      
+      const blobUrl = currentBlobUrl || base64ToBlobUrl(currentFileData.base64, currentFileData.mimeType);
+      
+      // บนมือถือ / iOS การเปิดแท็บใหม่จะแสดงผลตัวเต็มและให้ผู้ใช้กด Share บันทึกลงแอพไฟล์ได้ 100%
+      const newWin = window.open(blobUrl, '_blank');
+      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+        // กรณี Popup โดนเบราว์เซอร์บล็อก
+        window.location.href = blobUrl;
+      }
+    });
+
     downloadBtn.addEventListener('click', () => {
       if (!currentFileData) return;
 
       try {
-        let blobUrl = currentBlobUrl;
-        if (!blobUrl) {
-          blobUrl = base64ToBlobUrl(currentFileData.base64, currentFileData.mimeType);
-        }
+        const blobUrl = currentBlobUrl || base64ToBlobUrl(currentFileData.base64, currentFileData.mimeType);
+        const fileName = currentFileData.name || "ผลการเรียน.pdf";
 
-        // ตรวจสอบว่าเป็นอุปกรณ์ iOS (iPhone, iPad, iPod) หรือไม่
+        // ตรวจสอบว่ารันบน iOS หรือไม่
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
         if (isIOS) {
-          // บน iOS Safari การเปิดลิงก์ Blob ใน Tab ใหม่เป็นวิธีที่เข้ากันได้ดีที่สุด 
-          // เพื่อให้ผู้ใช้สามารถกดปุ่ม Share และเลือก "Save to Files" หรือส่งต่อได้สะดวก
-          window.open(blobUrl, '_blank');
-        } else {
-          // บนอุปกรณ์อื่น ๆ ใช้การคลิกลิงก์ดาวน์โหลดตามปกติ
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = currentFileData.name;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          // บน iOS Safari มักไม่เปิดดาวน์โหลดอัตโนมัติ ให้เปิดแท็บใหม่สำรอง
+          setTimeout(() => {
+            window.open(blobUrl, '_blank');
+          }, 400);
         }
       } catch (err) {
         alert("เกิดข้อผิดพลาดในการดาวน์โหลดเอกสาร: " + err.message);
       }
     });
 
-    // 4. ส่งแบบฟอร์มตรวจสอบข้อมูล (Submit Form)
+    // 5. ส่งแบบฟอร์มตรวจสอบข้อมูล (Submit Form)
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // ล้างข้อมูลหน้าจอและสถานะเก่าออก
       resultSection.classList.add('hidden');
       errorAlert.classList.add('hidden');
-      currentFileData = null;
-      zoomReset();
+      cleanupResources();
 
       const year = document.getElementById('academicYear').value;
       const grade = document.getElementById('gradeLevel').value;
-      // ล้างเครื่องหมายขีด (-) ออก ให้เหลือแต่ตัวเลข 13 หลักดิบๆ
       const cleanNationalId = inputNationalId.value.replace(/\D/g, '');
 
-      // ป้องกันการยิงคำขอหากกรอกเลขประชาชนไม่ครบ 13 หลัก
       if (cleanNationalId.length !== 13) {
         showError("เลขประจำตัวประชาชนไม่ถูกต้อง กรุณากรอกให้ครบ 13 หลัก");
         return;
       }
 
-      // แสดง Loading State
       setLoading(true);
 
       try {
-        // ทดสอบระบบ: หากไม่ได้กรอก URL ของสคริปต์จริง จะแสดงข้อมูลจำลองเพื่อการสาธิต (Mocking)
-        if (GAS_API_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL" || GAS_API_URL.trim() === "") {
-          console.log("Using Mock Data since no GAS_API_URL is configured.");
-          await new Promise(resolve => setTimeout(resolve, 1500)); // หน่วงเวลาสร้างมู้ดการโหลดจริง
-
-          // ตรวจสอบค่าจำลองสำหรับการทดสอบ
-          // ตัวอย่าง: รหัส 1102003004005 ใน ป.1 จะเป็นไฟล์ PDF
-          if (cleanNationalId === "1102003004005") {
-            // จำลองไฟล์ PDF (หน้ากระดาษเปล่า)
-            const mockPdfBase64 = "JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PC9DcmVhdG9yIChTYXJpYikvQ3JlYXRpb25EYXRlIChEOjIwMjYwODE1MTczNTAwWikvUHJvZHVjZXIgKFNhcmliKS9UaXRsZSAoTW9jayBHcmFkZSBSZXBvcnQpPj4KZW5kb2JqCjIgMCBvYmoKPDwvVHlwZS9DYXRhbG9nL1BhZ2VzIDMgMCBSPj4KZW5kb2JqCjMgMCBvYmoKPDwvVHlwZS9QYWdlcy9LaWRzWzQgMCBSXS9Db3VudCAxPj4KZW5kb2JqCjQgMCBvYmoKPDwvVHlwZS9QYWdlL1BhcmVudCAzIDAgUi9NZWRpYUJveFswIDAgNTk1IDg0Ml0vQ29udGVudHMgNSAwIFIvUmVzb3VyY2VzPDwvRm9udDw8L0YxIDYgMCBSPj4+Pj4KZW5kb2JqCjUgMCBvYmoKPDwvTGVuZ3RoIDcwPj4Kc3RyZWFtCkJUCi9GMSAxMiBUZgoxMDAgNzAwIFRkCihTY2hvb2wgR3JhZGUgUmVwb3J0IC0gQmFuaG9uZ3NhcGhhbmcgU2Nob29sIC0gUERGIE1vY2spIFNqCkVUCmVuZHN0cmVhbQplbmRvYmoKNiAwIG9iago8PC9UeXBlL0ZvbnQvU3VidHlwZS9UeXBlMS9CYXNlRm9udC9IZWx2ZXRpY2EvRW5jb2RpbmcvV2luQW5zaUVuY29kaW5nPj4KZW5kb2JqCnhyZWYKMCA3CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAxNyAwMDAwMCBuIAowMDAwMDAwMTIzIDAwMDAwIG4gCjAwMDAwMDAxNzEgHex 00000 nIAowMDAwMDAwMjI4IDAwMDAwIG4gCjAwMDAwMDAzMzQgMDAwMDAgbiAKMDAwMDAwMDQ1NSAwMDAwMCBuIAp0cmFpbGVyCjw8L1NpemUgNy9Sb290IDIgMCBSPj4Kc3RhcnR4cmVmCjU1OAolJUVPRgo=";
-            displayResult({
-              success: true,
-              name: "1102003004005_GradeReport.pdf",
-              mimeType: "application/pdf",
-              base64: mockPdfBase64
-            });
-          } else if (cleanNationalId === "1102003004006") {
-            // จำลองไฟล์รูปภาพ PNG (ไอคอนการศึกษาขนาดเล็ก)
-            const mockImgBase64 = "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";
-            displayResult({
-              success: true,
-              name: "1102003004006_GradeReport.png",
-              mimeType: "image/png",
-              base64: mockImgBase64
-            });
-          } else {
-            showError("ไม่พบข้อมูลผลการเรียน หรือเลขประจำตัวประชาชนไม่ถูกต้อง");
-          }
-          return;
-        }
-
-        // ยิง request จริงไปยัง GAS API
         const url = `${GAS_API_URL}?year=${encodeURIComponent(year)}&grade=${encodeURIComponent(grade)}&id=${encodeURIComponent(cleanNationalId)}`;
-
         const response = await fetch(url);
+        
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -580,60 +745,48 @@
       }
     });
 
-    // 5. แสดงผลลัพธ์ลงในหน้าเว็บ
-    function displayResult(data) {
+    // 6. แสดงผลลัพธ์ลงในหน้าเว็บ
+    async function displayResult(data) {
       currentFileData = data;
-
-      // ล้างหน่วยความจำ Blob URL เดิมที่เคยสร้างไว้
-      if (currentBlobUrl) {
-        URL.revokeObjectURL(currentBlobUrl);
-        currentBlobUrl = null;
-      }
-
-      // อัปเดตข้อมูลไฟล์
       resultFileName.textContent = data.name;
 
       const isPdf = data.mimeType.toLowerCase() === 'application/pdf' || data.name.toLowerCase().endsWith('.pdf');
 
+      // สร้าง Blob URL ไว้ใช้งาน
+      currentBlobUrl = base64ToBlobUrl(data.base64, data.mimeType);
+
       if (isPdf) {
         resultFileType.innerHTML = `<i class="fa-solid fa-file-pdf text-red-400 mr-1"></i> ประเภทไฟล์: PDF Document`;
-
-        // แปลงเป็น Blob URL เพื่อรองรับการเปิดอ่านบน iOS/Safari
-        currentBlobUrl = base64ToBlobUrl(data.base64, data.mimeType);
-        pdfViewer.src = currentBlobUrl;
-        pdfViewer.classList.remove('hidden');
+        pdfContainer.classList.remove('hidden');
         imageViewerContainer.classList.add('hidden');
+
+        resultSection.classList.remove('hidden');
+        // เรนเดอร์ PDF ด้วย PDF.js
+        await renderPdfFromBase64(data.base64);
       } else {
         resultFileType.innerHTML = `<i class="fa-solid fa-file-image text-blue-400 mr-1"></i> ประเภทไฟล์: Image File`;
-
-        // แสดงรูปภาพ
         imageViewer.src = `data:${data.mimeType};base64,${data.base64}`;
-        imageViewer.classList.remove('hidden');
-        pdfViewer.classList.add('hidden');
         imageViewerContainer.classList.remove('hidden');
+        pdfContainer.classList.add('hidden');
+
+        resultSection.classList.remove('hidden');
       }
 
-      // แสดง Section ผลลัพธ์
-      resultSection.classList.remove('hidden');
-
-      // เลื่อนหน้าจอลงไปยังส่วนแสดงผลเพื่อให้ผู้ใช้อ่านสะดวก
       setTimeout(() => {
         resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
 
-    // 6. แสดงข้อความแจ้งเตือนข้อผิดพลาด
+    // 7. แสดงข้อความแจ้งเตือนข้อผิดพลาด
     function showError(message) {
       errorText.textContent = message;
       errorAlert.classList.remove('hidden');
-
-      // เลื่อนหน้าจอลงไปยังข้อผิดพลาด
       setTimeout(() => {
         errorAlert.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
 
-    // 7. จัดการสถานะการรอโหลด (Loading State)
+    // 8. จัดการสถานะการรอโหลด (Loading State)
     function setLoading(isLoading) {
       if (isLoading) {
         submitBtn.disabled = true;
